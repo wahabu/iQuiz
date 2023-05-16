@@ -54,16 +54,43 @@ class App extends React.Component {
       userAnswer: null,
       isCorrect: null,
     };
+
+    this.handleAnswerClick = this.handleAnswerClick.bind(this);
+  }
+
+  handleAnswerClick(answer) {
+    const { quiz, currentQuestion } = this.state;
+    const isCorrect = quiz[currentQuestion].correctAnswer === answer;
+
+    this.setState({
+      userAnswer: answer,
+      isCorrect,
+    });
   }
 
   render() {
+    const { quiz, currentQuestion, userAnswer, isCorrect } = this.state;
+    const question = quiz[currentQuestion];
+  
     return (
       <div className="App">
         <h1>Japanese Quiz</h1>
-        {/* We'll add more here later */}
+        <p>{question.question}</p>
+        {question.answers.map((answer, index) => (
+          <button key={index} onClick={() => this.handleAnswerClick(answer)}>
+            {answer}
+          </button>
+        ))}
+        {userAnswer !== null && (
+          <p style={{ color: isCorrect ? 'green' : 'red' }}>
+            {isCorrect ? 'Correct!' : 'Incorrect!'}
+          </p>
+        )}
       </div>
     );
-  }
+  }  
 }
 
+
 export default App;
+
