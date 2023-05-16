@@ -56,6 +56,8 @@ class App extends React.Component {
     };
 
     this.handleAnswerClick = this.handleAnswerClick.bind(this);
+    this.handleNextQuestion = this.handleNextQuestion.bind(this);
+
   }
 
   handleAnswerClick(answer) {
@@ -82,13 +84,25 @@ class App extends React.Component {
           </button>
         ))}
         {userAnswer !== null && (
-          <p style={{ color: isCorrect ? 'green' : 'red' }}>
-            {isCorrect ? 'Correct!' : 'Incorrect!'}
-          </p>
+          <>
+            <p style={{ color: isCorrect ? 'green' : 'red' }}>
+              {isCorrect ? 'Correct!' : 'Incorrect!'}
+            </p>
+            <button onClick={this.handleNextQuestion}>Next Question</button>
+          </>
         )}
       </div>
     );
-  }  
+  } 
+
+  handleNextQuestion() {
+    this.setState(prevState => ({
+      currentQuestion: prevState.currentQuestion + 1,
+      userAnswer: null,
+      isCorrect: null,
+    }));
+  }
+  
 }
 
 
