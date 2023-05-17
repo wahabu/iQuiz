@@ -53,6 +53,7 @@ class App extends React.Component {
       currentQuestion: 0,
       userAnswer: null,
       isCorrect: null,
+      quizEnded: false,
     };
 
     this.handleAnswerClick = this.handleAnswerClick.bind(this);
@@ -71,7 +72,12 @@ class App extends React.Component {
   }
 
   render() {
-    const { quiz, currentQuestion, userAnswer, isCorrect } = this.state;
+    const { quiz, currentQuestion, userAnswer, isCorrect, quizEnded } = this.state;
+
+    if (quizEnded) {
+      return <h1>Quiz ended! Thanks for playing.</h1>;
+    }
+
     const question = quiz[currentQuestion];
   
     return (
@@ -96,11 +102,19 @@ class App extends React.Component {
   } 
 
   handleNextQuestion() {
-    this.setState(prevState => ({
-      currentQuestion: prevState.currentQuestion + 1,
-      userAnswer: null,
-      isCorrect: null,
-    }));
+    this.setState(prevState => {
+      const nextQuestion = prevState.currentQuestion + 1;
+
+      if (nextQuestion >= prevState.quiz.length) {
+        return { quizEnded: true};
+      }
+
+      return {
+        currentQuestion: nextQuestion,
+        userAnswer: null,
+        isCorrect: null,
+      };
+    });
   }
   
 }
