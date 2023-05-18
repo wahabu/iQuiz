@@ -54,6 +54,7 @@ class App extends React.Component {
       userAnswer: null,
       isCorrect: null,
       quizEnded: false,
+      timer: null,
     };
 
     this.handleAnswerClick = this.handleAnswerClick.bind(this);
@@ -69,6 +70,40 @@ class App extends React.Component {
       userAnswer: answer,
       isCorrect,
     });
+  }
+
+  handleNextQuestion() {
+    this.setState(prevState => {
+      const nextQuestion = prevState.currentQuestion + 1;
+
+      if (nextQuestion >= prevState.quiz.length) {
+        return { quizEnded: true};
+      }
+
+      return {
+        currentQuestion: nextQuestion,
+        userAnswer: null,
+        isCorrect: null,
+      };
+    });
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (this.state.currentQuestion !== prevState.currentQuestion) {
+      if (this.state.timer) {
+        clearTimeout(this.state.timer);
+      }
+  
+      this.setState({
+        timer: setTimeout(this.handleNextQuestion, 20000),  // 20 seconds
+      });
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.state.timer) {
+      clearTimeout(this.state.timer);
+    }
   }
 
   render() {
@@ -99,26 +134,8 @@ class App extends React.Component {
         )}
       </div>
     );
-  } 
-
-  handleNextQuestion() {
-    this.setState(prevState => {
-      const nextQuestion = prevState.currentQuestion + 1;
-
-      if (nextQuestion >= prevState.quiz.length) {
-        return { quizEnded: true};
-      }
-
-      return {
-        currentQuestion: nextQuestion,
-        userAnswer: null,
-        isCorrect: null,
-      };
-    });
-  }
-  
+  }   
 }
-
 
 export default App;
 
