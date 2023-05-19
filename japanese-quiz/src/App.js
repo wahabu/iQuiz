@@ -25,51 +25,30 @@
 // export default App;
 
 /* ################################################################################## */
-
 import React from 'react';
+import './App.css';
 
 class App extends React.Component {
   constructor(props) {
     super(props);
-
     this.state = {
       quiz: [
         {
-          question: '先生は学生に宿題を________。',
-          answers: ['します', 'くれます', 'あげます', 'もらいます'],
-          correctAnswer: 'あげます'
+          question: 'これは何ですか?',
+          options: ['りんご', 'ばなな', 'オレンジ', 'いちご'],
+          answer: 0
         },
-        {
-          question: 'つくえ',
-          answers: ['机', '電話', '車', '服'],
-          correctAnswer: '机'
-        },
-        {
-          question: '明日',
-          answers: ['あした', 'あさって', 'きょう', 'いま'],
-          correctAnswer: 'あした'
-        }
       ],
       currentQuestion: 0,
       userAnswer: null,
       isCorrect: null,
       quizEnded: false,
       timer: null,
+      remainingSeconds: 20,  // The number of remaining seconds
     };
 
-    this.handleAnswerClick = this.handleAnswerClick.bind(this);
     this.handleNextQuestion = this.handleNextQuestion.bind(this);
-
-  }
-
-  handleAnswerClick(answer) {
-    const { quiz, currentQuestion } = this.state;
-    const isCorrect = quiz[currentQuestion].correctAnswer === answer;
-
-    this.setState({
-      userAnswer: answer,
-      isCorrect,
-    });
+    this.handleAnswer = this.handleAnswer.bind(this);
   }
 
   handleNextQuestion() {
@@ -77,65 +56,85 @@ class App extends React.Component {
       const nextQuestion = prevState.currentQuestion + 1;
 
       if (nextQuestion >= prevState.quiz.length) {
-        return { quizEnded: true};
+        return { quizEnded: true };
       }
 
       return {
         currentQuestion: nextQuestion,
         userAnswer: null,
         isCorrect: null,
+        remainingSeconds: 20,  // Reset the timer to 20 seconds
       };
+    });
+  }
+
+  handleAnswer(option) {
+    this.setState(prevState => {
+      const isCorrect = option === prevState.quiz[prevState.currentQuestion].answer;
+      return { userAnswer: option, isCorrect };
+    });
+  }
+
+  componentDidMount() {
+    this.setState({
+      timer: setInterval(() => {
+        this.setState(prevState => ({
+          remainingSeconds: prevState.remainingSeconds - 1,
+        }), () => {
+          if (this.state.remainingSeconds <= 0) {
+            this.handleNextQuestion();
+          }
+        });
+      }, 1000)
     });
   }
 
   componentDidUpdate(prevProps, prevState) {
     if (this.state.currentQuestion !== prevState.currentQuestion) {
-      if (this.state.timer) {
-        clearTimeout(this.state.timer);
-      }
-  
-      this.setState({
-        timer: setTimeout(this.handleNextQuestion, 20000),  // 20 seconds
-      });
+      this.setState({ remainingSeconds: 20 });  // Reset the timer to 20 seconds
     }
   }
 
   componentWillUnmount() {
     if (this.state.timer) {
-      clearTimeout(this.state.timer);
+      clearInterval(this.state.timer);
     }
   }
 
   render() {
-    const { quiz, currentQuestion, userAnswer, isCorrect, quizEnded } = this.state;
+    const { quiz, currentQuestion, userAnswer, isCorrect, quizEnded, remainingSeconds } = this.state;
 
     if (quizEnded) {
       return <h1>Quiz ended! Thanks for playing.</h1>;
     }
 
     const question = quiz[currentQuestion];
-  
+
     return (
       <div className="App">
         <h1>Japanese Quiz</h1>
+        <div style={{ 
+            height: '20px', 
+            width: `${remainingSeconds * 5}%`, // Each second represents 5% of the bar
+            backgroundColor: 'orange',
+            transition: 'width 1s ease-in-out'
+          }} 
+        />
         <p>{question.question}</p>
-        {question.answers.map((answer, index) => (
-          <button key={index} onClick={() => this.handleAnswerClick(answer)}>
-            {answer}
+        {question.options.map((option, index) => (
+          <button
+            key={index}
+            onClick={() => this.handleAnswer(index)}
+            style={{ backgroundColor: userAnswer === index ? isCorrect ? 'green' : 'red' : '' }}
+          >
+            {option}
           </button>
         ))}
-        {userAnswer !== null && (
-          <>
-            <p style={{ color: isCorrect ? 'green' : 'red' }}>
-              {isCorrect ? 'Correct!' : 'Incorrect!'}
-            </p>
-            <button onClick={this.handleNextQuestion}>Next Question</button>
-          </>
-        )}
+        <button onClick={this.handleNextQuestion}>Next Question</button>
       </div>
     );
-  }   
+  }
 }
 
-export default App;
 
+export default App;
