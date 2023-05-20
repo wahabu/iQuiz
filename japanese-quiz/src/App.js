@@ -25,116 +25,124 @@
 // export default App;
 
 /* ################################################################################## */
+
 import React from 'react';
-import './App.css';
+import ProgressBar from './ProgressBar';
 
 class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      quiz: [
+      questions: [
         {
-          question: 'これは何ですか?',
-          options: ['りんご', 'ばなな', 'オレンジ', 'いちご'],
-          answer: 0
+          question: 'What is the Japanese word for "cat"?',
+          choices: ['犬', '猫', '鳥', '馬'],
+          correctChoice: 1,
         },
+        // Add more questions here
       ],
       currentQuestion: 0,
-      userAnswer: null,
-      isCorrect: null,
-      quizEnded: false,
+      selectedChoice: null,
+      seconds: 20,
+      elapsedSeconds: 0,
+      started: false,
       timer: null,
-      remainingSeconds: 20,  // The number of remaining seconds
     };
-
-    this.handleNextQuestion = this.handleNextQuestion.bind(this);
-    this.handleAnswer = this.handleAnswer.bind(this);
-  }
-
-  handleNextQuestion() {
-    this.setState(prevState => {
-      const nextQuestion = prevState.currentQuestion + 1;
-
-      if (nextQuestion >= prevState.quiz.length) {
-        return { quizEnded: true };
-      }
-
-      return {
-        currentQuestion: nextQuestion,
-        userAnswer: null,
-        isCorrect: null,
-        remainingSeconds: 20,  // Reset the timer to 20 seconds
-      };
-    });
-  }
-
-  handleAnswer(option) {
-    this.setState(prevState => {
-      const isCorrect = option === prevState.quiz[prevState.currentQuestion].answer;
-      return { userAnswer: option, isCorrect };
-    });
   }
 
   componentDidMount() {
-    this.setState({
-      timer: setInterval(() => {
-        this.setState(prevState => ({
-          remainingSeconds: prevState.remainingSeconds - 1,
-        }), () => {
-          if (this.state.remainingSeconds <= 0) {
-            this.handleNextQuestion();
-          }
-        });
-      }, 1000)
-    });
-  }
-
-  componentDidUpdate(prevProps, prevState) {
-    if (this.state.currentQuestion !== prevState.currentQuestion) {
-      this.setState({ remainingSeconds: 20 });  // Reset the timer to 20 seconds
-    }
+    // Start the quiz
+    this.startQuiz();
   }
 
   componentWillUnmount() {
-    if (this.state.timer) {
-      clearInterval(this.state.timer);
+    // Clear the timer when the component is unmounted
+    clearTimeout(this.state.timer);
+  }
+
+  startQuiz() {
+    // Set started to true and begin the timer
+    this.setState({ started: true });
+    this.tick();
+  }
+
+  tick() {
+    // Update the elapsedSeconds every second until the time is up
+    const timer = setTimeout(() => {
+      if (this.state.elapsedSeconds < this.state.seconds) {
+        this.setState(
+          (prevState) => ({
+            elapsedSeconds: prevState.elapsedSeconds + 1,
+          }),
+          () => {
+            // Call tick() recursively after each update
+            this.tick();
+          }
+        );
+      } else {
+        // Time is up, end the quiz
+        this.setState({ started: false });
+        clearTimeout(timer);
+      }
+    }, 1000);
+    this.setState({ timer });
+  }
+
+  handleAnswer(choice) {
+    // Set the selectedChoice based on user input
+    this.setState({ selectedChoice: choice });
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (prevState.elapsedSeconds !== this.state.elapsedSeconds) {
+      // Re-render the ProgressBar when elapsedSeconds changes
+      this.forceUpdate();
     }
   }
 
   render() {
-    const { quiz, currentQuestion, userAnswer, isCorrect, quizEnded, remainingSeconds } = this.state;
-
-    if (quizEnded) {
-      return <h1>Quiz ended! Thanks for playing.</h1>;
-    }
-
-    const question = quiz[currentQuestion];
-
+    const currentQuestion = this.state.questions[this.state.currentQuestion];
+    const remainingSeconds = this.state.seconds - this.state.elapsedSeconds;
+    const isCorrect = this.state.selectedChoice === currentQuestion.correctChoice;
+  
     return (
-      <div className="App">
+      <div>
         <h1>Japanese Quiz</h1>
-        <div style={{ 
-            height: '20px', 
-            width: `${remainingSeconds * 5}%`, // Each second represents 5% of the bar
-            backgroundColor: 'orange',
-            transition: 'width 1s ease-in-out'
-          }} 
-        />
-        <p>{question.question}</p>
-        {question.options.map((option, index) => (
-          <button
-            key={index}
-            onClick={() => this.handleAnswer(index)}
-            style={{ backgroundColor: userAnswer === index ? isCorrect ? 'green' : 'red' : '' }}
-          >
-            {option}
-          </button>
-        ))}
-        <button onClick={this.handleNextQuestion}>Next Question</button>
+  
+        {/* Render the ProgressBar */}
+        <ProgressBar in={this.state.started} remainingSeconds={remainingSeconds} />
+  
+        {/* Render the current question */}
+        <div>{currentQuestion.question}</div>
+  
+        {/* Render the answer choices */}
+        <div>
+          {currentQuestion.choices.map((choice, index) => (
+            <button
+              key={index}
+              onClick={() => this.handleAnswer(index)}
+              style={{
+                backgroundColor:
+                  this.state.selectedChoice === index ? (isCorrect ? 'green' : 'red') : '',
+              }}
+            >
+              {choice}
+            </button>
+          ))}
+        </div>
+  
+        {/* Render the feedback */}
+        {this.state.selectedChoice !== null && (
+          <div style={{ color: isCorrect ? 'green' : 'red' }}>
+            {isCorrect ? 'Correct!' : 'Incorrect'}
+          </div>
+        )}
+  
+        {/* Render the remaining seconds */}
+        <div>{remainingSeconds} seconds remaining</div>
       </div>
     );
-  }
+  }  
 }
-
 
 export default App;
